@@ -36,25 +36,24 @@ squares = {chess.A8:[(s*0,s*7),(s*1,s*8)], chess.B8:[(s*1,s*7),(s*2,s*8)], chess
            chess.A3:[(s*0,s*2),(s*1,s*3)], chess.B3:[(s*1,s*2),(s*2,s*3)], chess.C3:[(s*2,s*2),(s*3,s*3)], chess.D3:[(s*3,s*2),(s*4,s*3)], chess.E3:[(s*4,s*2),(s*5,s*3)], chess.F3:[(s*5,s*2),(s*6,s*3)], chess.G3:[(s*6,s*2),(s*7,s*3)], chess.H3:[(s*7,s*2),(s*8,s*3)],
            chess.A2:[(s*0,s*1),(s*1,s*2)], chess.B2:[(s*1,s*1),(s*2,s*2)], chess.C2:[(s*2,s*1),(s*3,s*2)], chess.D2:[(s*3,s*1),(s*4,s*2)], chess.E2:[(s*4,s*1),(s*5,s*2)], chess.F2:[(s*5,s*1),(s*6,s*2)], chess.G2:[(s*6,s*1),(s*7,s*2)], chess.H2:[(s*7,s*1),(s*8,s*2)],
            chess.A1:[(s*0,s*0),(s*1,s*1)], chess.B1:[(s*1,s*0),(s*2,s*1)], chess.C1:[(s*2,s*0),(s*3,s*1)], chess.D1:[(s*3,s*0),(s*4,s*1)], chess.E1:[(s*4,s*0),(s*5,s*1)], chess.F1:[(s*5,s*0),(s*6,s*1)], chess.G1:[(s*6,s*0),(s*7,s*1)], chess.H1:[(s*7,s*0),(s*8,s*1)]}
-turn = "First turn"
 
-def readBoard(fileName):
-
-    pgn = open (fileName)
+def readBoard():
+    turns = []
+    pgn = open ("CompGM.pgn")
     node = chess.pgn.read_game(pgn)
-    if turn == "First turn":    
-        return node.board()
-    node.board().san(node.variation (0).move)
-    node = node.variation (0)
-    turn = 1
-    return node.board()
+    while node.variations:
+        node.board().san(node.variation (0).move)
+        node = node.variation (0)
+        turns.append(node.board())
+    pgn.close()
+    return turns
 
 
 #The parameter of this function is the turn's specified position passed into a Bitboard, 
 #an object representation of a chess game at a specified turn defined by the python-chess
 #library. 
 def makeInfluenceMatrices(bitboard):
-
+    
     #Initialize each influence matrix, i.e 8x8 matrices of 0's
     winf = numpy.zeros((8,8))
     binf = numpy.zeros((8,8))
@@ -97,17 +96,12 @@ def makeInfluenceMatrices(bitboard):
         #Returns an array containing the white influence and black influence matrices    
         return [winf, binf]
             
-    gameStart = makeInfluenceMatrices(chess.Bitboard())
-    nextTurn = makeInfluenceMatrices(node.readBoard())
+def giveInfluenceMatrices():
+    gameStart = makeInfluenceMatrices(chess.Bitboard()) 
     x = 0
-    for color in ["White","Black"]:
+    for color in ["White", "Black"]:
         print("{} Influence Matrix:\n{}".format(color, gameStart[x]))
         x += 1
-        
-    for color in ["White","Black"]:
-        print("{} Influence Matrix:\n{}".format(color, nextTurn[x]))
-        x += 1
-
 
     
 
