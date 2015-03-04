@@ -3,13 +3,18 @@ import chess, numpy
 import chess.pgn
 from PIL import Image, ImageDraw, ImageFont
 
-## Assigns color names to the corresponding names in the code
+## Assigns an empty list to reference turn. This will be used to store the bitboard for each turn in the game.
+turn = []
+
+## Assigns color names to the corresponding names in the code, for ease of use.
 white = chess.WHITE
 black = chess.BLACK
 
-## Length in pixels of one side of one square
+## Length in pixels of one side of one square.
 s = 64
 
+## These are most likely not the lists of data we will end up with when the program is finished, they can be updated as we continue writing
+## the code and figure out what type of data we need and in what format.
 rows1357 = [[(s*0,s*7),(s*1,s*8)],[(s*1,s*7),(s*2,s*8)],[(s*2,s*7),(s*3,s*8)],[(s*3,s*7),(s*4,s*8)],[(s*4,s*7),(s*5,s*8)],[(s*5,s*7),(s*6,s*8)],[(s*6,s*7),(s*7,s*8)],[(s*7,s*7),(s*8,s*8)],
             [(s*0,s*5),(s*1,s*6)],[(s*1,s*5),(s*2,s*6)],[(s*2,s*5),(s*3,s*6)],[(s*3,s*5),(s*4,s*6)],[(s*4,s*5),(s*5,s*6)],[(s*5,s*5),(s*6,s*6)],[(s*6,s*5),(s*7,s*6)],[(s*7,s*5),(s*8,s*6)],
             [(s*0,s*3),(s*1,s*4)],[(s*1,s*3),(s*2,s*4)],[(s*2,s*3),(s*3,s*4)],[(s*3,s*3),(s*4,s*4)],[(s*4,s*3),(s*5,s*4)],[(s*5,s*3),(s*6,s*4)],[(s*6,s*3),(s*7,s*4)],[(s*7,s*3),(s*8,s*4)],
@@ -18,16 +23,14 @@ rows2468 = [[(s*0,s*6),(s*1,s*7)],[(s*1,s*6),(s*2,s*7)],[(s*2,s*6),(s*3,s*7)],[(
             [(s*0,s*4),(s*1,s*5)],[(s*1,s*4),(s*2,s*5)],[(s*2,s*4),(s*3,s*5)],[(s*3,s*4),(s*4,s*5)],[(s*4,s*4),(s*5,s*5)],[(s*5,s*4),(s*6,s*5)],[(s*6,s*4),(s*7,s*5)],[(s*7,s*4),(s*8,s*5)],
             [(s*0,s*2),(s*1,s*3)],[(s*1,s*2),(s*2,s*3)],[(s*2,s*2),(s*3,s*3)],[(s*3,s*2),(s*4,s*3)],[(s*4,s*2),(s*5,s*3)],[(s*5,s*2),(s*6,s*3)],[(s*6,s*2),(s*7,s*3)],[(s*7,s*2),(s*8,s*3)],
             [(s*0,s*0),(s*1,s*1)],[(s*1,s*0),(s*2,s*1)],[(s*2,s*0),(s*3,s*1)],[(s*3,s*0),(s*4,s*1)],[(s*4,s*0),(s*5,s*1)],[(s*5,s*0),(s*6,s*1)],[(s*6,s*0),(s*7,s*1)],[(s*7,s*0),(s*8,s*1)]]
-
-influence = {chess.A8:0, chess.B8:0, chess.C8:0, chess.D8:0, chess.E8:0, chess.F8:0, chess.G8:0, chess.H8:0, 
-             chess.A7:0, chess.B7:0, chess.C7:0, chess.D7:0, chess.E7:0, chess.F7:0, chess.G7:0, chess.H7:0, 
-             chess.A6:0, chess.B6:0, chess.C6:0, chess.D6:0, chess.E6:0, chess.F6:0, chess.G6:0, chess.H6:0, 
-             chess.A5:0, chess.B5:0, chess.C5:0, chess.D5:0, chess.E5:0, chess.F5:0, chess.G5:0, chess.H5:0, 
-             chess.A4:0, chess.B4:0, chess.C4:0, chess.D4:0, chess.E4:0, chess.F4:0, chess.G4:0, chess.H4:0, 
-             chess.A3:0, chess.B3:0, chess.C3:0, chess.D3:0, chess.E3:0, chess.F3:0, chess.G3:0, chess.H3:0, 
-             chess.A2:0, chess.B2:0, chess.C2:0, chess.D2:0, chess.E2:0, chess.F2:0, chess.G2:0, chess.H2:0, 
+influence = {chess.A8:0, chess.B8:0, chess.C8:0, chess.D8:0, chess.E8:0, chess.F8:0, chess.G8:0, chess.H8:0,
+             chess.A7:0, chess.B7:0, chess.C7:0, chess.D7:0, chess.E7:0, chess.F7:0, chess.G7:0, chess.H7:0,
+             chess.A6:0, chess.B6:0, chess.C6:0, chess.D6:0, chess.E6:0, chess.F6:0, chess.G6:0, chess.H6:0,
+             chess.A5:0, chess.B5:0, chess.C5:0, chess.D5:0, chess.E5:0, chess.F5:0, chess.G5:0, chess.H5:0,
+             chess.A4:0, chess.B4:0, chess.C4:0, chess.D4:0, chess.E4:0, chess.F4:0, chess.G4:0, chess.H4:0,
+             chess.A3:0, chess.B3:0, chess.C3:0, chess.D3:0, chess.E3:0, chess.F3:0, chess.G3:0, chess.H3:0,
+             chess.A2:0, chess.B2:0, chess.C2:0, chess.D2:0, chess.E2:0, chess.F2:0, chess.G2:0, chess.H2:0,
              chess.A1:0, chess.B1:0, chess.C1:0, chess.D1:0, chess.E1:0, chess.F1:0, chess.G1:0, chess.H1:0}
-
 squares = {chess.A8:[(s*0,s*7),(s*1,s*8)], chess.B8:[(s*1,s*7),(s*2,s*8)], chess.C8:[(s*2,s*7),(s*3,s*8)], chess.D8:[(s*3,s*7),(s*4,s*8)], chess.E8:[(s*4,s*7),(s*5,s*8)], chess.F8:[(s*5,s*7),(s*6,s*8)], chess.G8:[(s*6,s*7),(s*7,s*8)], chess.H8:[(s*7,s*7),(s*8,s*8)],
            chess.A7:[(s*0,s*6),(s*1,s*7)], chess.B7:[(s*1,s*6),(s*2,s*7)], chess.C7:[(s*2,s*6),(s*3,s*7)], chess.D7:[(s*3,s*6),(s*4,s*6)], chess.E7:[(s*4,s*6),(s*5,s*7)], chess.F7:[(s*5,s*6),(s*6,s*7)], chess.G7:[(s*6,s*6),(s*7,s*7)], chess.H7:[(s*7,s*6),(s*8,s*7)],
            chess.A6:[(s*0,s*5),(s*1,s*6)], chess.B6:[(s*1,s*5),(s*2,s*6)], chess.C6:[(s*2,s*5),(s*3,s*6)], chess.D6:[(s*3,s*5),(s*4,s*6)], chess.E6:[(s*4,s*5),(s*5,s*6)], chess.F6:[(s*5,s*5),(s*6,s*6)], chess.G6:[(s*6,s*5),(s*7,s*6)], chess.H6:[(s*7,s*5),(s*8,s*6)],
@@ -38,75 +41,83 @@ squares = {chess.A8:[(s*0,s*7),(s*1,s*8)], chess.B8:[(s*1,s*7),(s*2,s*8)], chess
            chess.A1:[(s*0,s*0),(s*1,s*1)], chess.B1:[(s*1,s*0),(s*2,s*1)], chess.C1:[(s*2,s*0),(s*3,s*1)], chess.D1:[(s*3,s*0),(s*4,s*1)], chess.E1:[(s*4,s*0),(s*5,s*1)], chess.F1:[(s*5,s*0),(s*6,s*1)], chess.G1:[(s*6,s*0),(s*7,s*1)], chess.H1:[(s*7,s*0),(s*8,s*1)]}
 
 def readBoard():
-    turns = []
     pgn = open ("CompGM.pgn")
     node = chess.pgn.read_game(pgn)
+    turn.append(node.board())
     while node.variations:
         node.board().san(node.variation (0).move)
         node = node.variation (0)
-        turns.append(node.board())
+        turn.append(node.board())
     pgn.close()
-    return turns
 
 
-#The parameter of this function is the turn's specified position passed into a Bitboard, 
+#The parameter of this function is the turn's specified position passed into a Bitboard,
 #an object representation of a chess game at a specified turn defined by the python-chess
-#library. 
+#library.
 def makeInfluenceMatrices(bitboard):
-    
+
     #Initialize each influence matrix, i.e 8x8 matrices of 0's
     winf = numpy.zeros((8,8))
     binf = numpy.zeros((8,8))
-	
+
     #Iterate over the entire Bitboard, tile by tile, to find all the possible attacks.
-    #This process requires its own function as the Bitboard class starts counting tiles 
-    #from the bottom left corner, left to right, bottom to top, whereas the matrices 
-    #require tuples (e.g. "2,3") and count top to bottom. Thus, the function assigns the 
+    #This process requires its own function as the Bitboard class starts counting tiles
+    #from the bottom left corner, left to right, bottom to top, whereas the matrices
+    #require tuples (e.g. "2,3") and count top to bottom. Thus, the function assigns the
     #proper row of the tuple according to the location of the Bitboard tile. For example
-    #Bitboard tile 0 is A1 (the bottom left corner) while the appropriate matrix location 
+    #Bitboard tile 0 is A1 (the bottom left corner) while the appropriate matrix location
     #is matrix[7,0].
     def tupler(tile):
         x = 0
+
         if tile < 8:
             x = 7
+
         elif 7 < tile < 16:
             x = 6
+
         elif 15 < tile < 24:
-          x = 5
+            x = 5
+
         elif 23 < tile < 32:
-          x = 4
+            x = 4
+
         elif 31 < tile < 40:
-          x = 3
+            x = 3
+
         elif 39 < tile < 48:
-          x = 2
+            x = 2
+
         elif 47 < tile < 56:
-          x = 1
+            x = 1
+
         elif 55 < tile < 64:
-           x = 0
+            x = 0
+
         return x,(tile % 8)
-        #Iterate White's attacking influence
-        for tile in range(64):
-            winf[tupler(tile)] = len(bitboard.attackers(white, tile))
-            
-        print("\n")
-        #Iterate Black's attacking influence        
-        for tile in range(64):
-            binf[tupler(tile)] = len(bitboard.attackers(black, tile))
-            
-        #Returns an array containing the white influence and black influence matrices    
-        return [winf, binf]
-            
-def giveInfluenceMatrices():
-    gameStart = makeInfluenceMatrices(chess.Bitboard()) 
+
+    #Iterate White's attacking influence
+    for tile in range(64):
+        winf[tupler(tile)] = len(bitboard.attackers(white, tile))
+    for tile in range(64):
+        binf[tupler(tile)] = len(bitboard.attackers(black, tile))
+
+    #Returns an array containing the white influence and black influence matrices
+    return [binf, winf]
+
+# This function just gives a cleaned-up version of what we get from the makeInfluenceMatrices function.
+# Really just here to give a clear picture of what's going on.
+def giveInfluenceMatrices(index):
+    gameStart = makeInfluenceMatrices(turn[index])
     x = 0
     for color in ["White", "Black"]:
         print("{} Influence Matrix:\n{}".format(color, gameStart[x]))
         x += 1
 
-    
+
 
 #def makeInfluenceMatrices():
-#    
+#
 #    ## Assigns the initial turn number to reference turn
 #    turn = 0
 #
@@ -129,7 +140,7 @@ def giveInfluenceMatrices():
 #
 #            ## Evaluate the number of attackers and adjust the list influence at index squareNum
 #            influence [squareNum] += len(node.board().attackers (white,key))
-#            squareNum += 1 
+#            squareNum += 1
 #
 ##        for key in influence:
 ##            draw.rectangle(xy=squares[key],fill='red')
@@ -145,7 +156,7 @@ def giveInfluenceMatrices():
 #
 #        turn += 1
 #
-#        
+#
 ## Other comments:
 
 ## This function opens the image stored at reference im
@@ -168,7 +179,7 @@ def drawChessboard(color, bitboard):
     ## Assigns a new image to reference im with side length 512
     im = Image.new('L',(512,512),255)
 
-    ## Assigns the PIL draw function to reference draw, for the image stored at reference im 
+    ## Assigns the PIL draw function to reference draw, for the image stored at reference im
     draw = ImageDraw.Draw(im)
 
     ## Draw gray squares at every other coordinate in the list
